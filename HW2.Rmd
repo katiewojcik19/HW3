@@ -1,0 +1,142 @@
+---
+title: "HW2 ADA"
+author: "Katie Wojcik"
+date: "2022-09-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# for SPSS (read_sav()), stata (read_dta()), SAS(read_sas()) and xpt (read_xpt()) files
+library(haven) 
+
+# for reading csv file (read_csv())
+library(readr) 
+
+# for data management
+library(dplyr) 
+
+#for exporting excel files
+library(openxlsx) 
+
+library(tableone)
+```
+
+1. Import class one survey data from our Github site (https://github.com/kijohnson/ADA) (The dataset is called ‘Class 1 Survey Fall 2022.csv’), calling the R dataframe that you create C1survey.
+
+```{r}
+C1survey <- read_csv("https://raw.githubusercontent.com/kijohnson/ADA/master/Class%201%20Survey%20Fall%202022.csv")
+```
+
+2. Determine: a. the number of observations (i.e. the number of people who filled out the survey) and b. the number of variables in the dataframe.
+    42 observations, 27 variables
+    
+3. a. Rename the column variables to something shorter and that is descriptive of what the variable is about (for example like_dogs for the ‘Do you like dogs?’ question variable) and b. Display that they are renamed.
+
+```{r}
+# get column names to rename variables
+colnames(C1survey)
+
+#rename variables in order of appearance
+names(C1survey)[1:27]<-c("ID", "like_cats", "like_dogs", "island_item", "life_slogan", "fave_day", "bird_type", "fave_food", "fave_drink", "fave_season", "fave_month", "hobby", "degree", "specialization", "stat_software", "R_experience", "coding_comfort", "time_coding", "things_learn", "interest_area", "fave_number", "birth_day", "birth_month", "home_country", "home_state", "home_city", "education_level")
+
+#display renamed
+colnames(C1survey)
+```
+
+4. Write code to determine and display the number of factor, integer, numerical, and character variables there are in the C1survey dataset.
+```{r}
+# check factor
+sapply(C1survey, is.factor)
+# 0 factor variables
+
+# check integer
+sapply(C1survey, is.integer)
+# 0 integer variables
+
+# check numeric
+sapply(C1survey, is.numeric)
+# 4 numeric variables
+
+# check character
+sapply(C1survey, is.character)
+# 23 character variables
+```
+
+5. a. Using code, check the bday and bmonth variables for any unusual or missing values. If you find any, b. describe what you will do with the unusual values in a comment before or immediately following the code that does it, and c. after you have cleaned up any unusual values, find the median bday and month. *Note: please make sure that your bday and month variables are numeric before doing statistics
+
+```{r}
+# recode bday and bmonth as numeric
+C1survey$birth_day<-as.numeric(C1survey$birth_day) 
+C1survey$birth_month<-as.numeric(C1survey$birth_month)
+
+# check class
+class(C1survey$birth_day)
+class(C1survey$birth_month)
+
+# check NA/missing
+which(is.na(C1survey$birth_day))
+which(is.na(C1survey$birth_month))
+# 3 missing in birth day, 5 missing in birth month 
+
+# drop missing values, find median
+median(C1survey$birth_day, na.rm=TRUE) 
+median(C1survey$birth_month, na.rm=TRUE) 
+
+```
+
+6. a. Create a new variable called bseason that gives the season according to Northern Meteorological season in which respondents were born (winter=12/1 to 2/29, spring=3/1 to 5/31, summer=6/1 to 8/31, fall=9/1 to 11/30). b. Using the table function, print a table of Seasons in the columns and bmonths in the rows that allows you to check that the coding is correct c. Sum the columns using the addmargins function to answer the question of how many classmates were born in each season? Include your answer in the code.
+
+```{r}
+#create a dataframe for month and corresponding season
+dfSeason <- data.frame(bseason = c(rep("Winter", 3), rep("Summer", 3), 
+rep("Spring", 3), rep("Fall", 3)),
+                   birth_month = month.name[c(11,12,1, 5:7, 2:4, 8:10)],
+                   stringsAsFactors = F)
+
+# make month names into numbers
+dfSeason$birth_month[1] = 11
+dfSeason$birth_month[2] = 12
+dfSeason$birth_month[3] = 1
+dfSeason$birth_month[4] = 5
+dfSeason$birth_month[5] = 6
+dfSeason$birth_month[6] = 7
+dfSeason$birth_month[7] = 2
+dfSeason$birth_month[8] = 3
+dfSeason$birth_month[9] = 4
+dfSeason$birth_month[10] = 8
+dfSeason$birth_month[11] = 9
+dfSeason$birth_month[12] = 10
+
+# merge data frames by birth month
+C1survey <- merge(dfSeason, C1survey, by="birth_month")
+
+# print a table
+table1<- table(C1survey$birth_month, C1survey$bseason)
+table1
+
+# find total in each season
+table1sum <- addmargins(table1, FUN = sum)
+table1sum
+
+# 10 students born in fall, 6 in spring, 13 in summer, and 8 in winter
+```
+
+7. Pick your favorite variable to analyze, come up with a question you want to answer with that variable, generate the code, and provide an answer to your question. Describe what you did using comments (i.e. #’s).
+
+```{r}
+# Create a frequency table for like_cats. What percentage of the class is in each category? 
+
+cats.tab <- table(C1survey$like_cats)
+cats.tab
+
+#Get percentages
+
+prop.table(cats.tab)*100
+
+# 24.3% of the class is ambivalent, 18.9% doesn't like cats, and 56.8% likes cats 
+```
+
